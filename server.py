@@ -33,18 +33,21 @@ while True:
 
         # Recieve the payload
         filepath = os.path.join(dpath, 'input.mp4')
-        args_json = helper.receive_data(connection, json_size, media_type_size, payload_size, filepath)
+        arg_json = helper.receive_data(connection, json_size, media_type_size, payload_size, filepath)
 
         # Run the ffmpeg command
-        output_filepath = commands.ffmpeg_run(filepath, os.path.join(dpath, 'output.mp4'), args_json)
+        output_filepath = commands.ffmpeg_run(filepath, dpath, arg_json)
 
         #return the output file
         file_size = helper.get_filesize(output_filepath)
         if file_size > pow(2, 32):
             raise Exception('File size exceeds 4TB limit')
-        header = helper.protocol_header(0, len(helper.get_extention(filepath)), file_size)
+        extention = helper.get_extention(output_filepath)
+        header = helper.protocol_header(0, len(extention), file_size)
         connection.send(header)
-        helper.send_data(connection, '', helper.get_extention(filepath),filepath)
+        helper.send_data(connection, '', extention, output_filepath)
+
+        
 
 
     except Exception as e:

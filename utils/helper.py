@@ -52,11 +52,6 @@ def choose_command(extention):
             'command': 5,
             'extention': extention
         }   
-    elif command == '6':
-        return {
-            'command': 6,
-            'extention': extention
-        }
     else:
         return {
             'command': -1
@@ -100,6 +95,7 @@ def receive_data(sock, json_size, media_type_size, payload_size, file_name):
         body += sock.recv(stream_rate if payload_size > stream_rate else payload_size)
         payload_size -= stream_rate
         print('Receiving...')
+    file_name = file_name.split('.')[0] + '.' + media_type
     with open(file_name, 'wb+') as f:
         f.write(body)
         print('File saved')
