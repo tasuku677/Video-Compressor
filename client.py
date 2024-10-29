@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 import json
 import subprocess
-
+from utils import helper
 
 header = {
     "header_size": 8,
@@ -20,6 +20,10 @@ command_json = {
     "output": "output.mp3"
 }
 # subprocess.run(['ffmpeg', '-i', 'input.mp4', 'output.mp3'])
+
+dpath = 'client_temp'
+if not os.path.exists(dpath):
+    os.makedirs(dpath)
 
 def protocol_header(json_size, media_type_size, payload_size):
     return json_size.to_bytes(2, byteorder='big') + media_type_size.to_bytes(1, byteorder='big') + payload_size.to_bytes(5, byteorder='big')
@@ -40,31 +44,14 @@ except Exception as e:
 
 try:
     # filepath = input('Type in a file to upload: ')
-    filepath = 'movie.mp4'
-    with open(filepath, 'rb') as f:
-        f.seek (0, os.SEEK_END)
-        file_size  = f.tell()
-        f.seek(0)
+    filepath = os.path.join(dpath,'movie.mp4')
+    file_size = helper.get_filesize(filepath)
+    helper.send_header(sock, filepath, file_size)
+    helper.send_data(sock, filepath)
 
-        if file_size > pow(2, 32):
-            raise Exception('File size exceeds 4TB limit')
-        
-        file_name = os.path.basename(filepath)
-        file_name_size = file_name.encode('utf-8')
-        media_type_size = ('mp4').encode('utf-8')
-
-        header = protocol_header(0, len('mp4'), file_size)
-        sock.send(header)
-
-        if not file_name.endswith('.mp4'):
-            raise Exception('File is not an mp4')
-
-        while True:
-            data = f.read(1024)
-            if not data:
-                break
-            print('Sending...')
-            sock.send(data)
+    # Receive the response
+    json_size, media_type_size, payload_size = helper.receive_header(sock)
+    helper.receive_data(sock, payload_size, "client_temp/output.mp4")
 
 finally:
     print('closing socket')

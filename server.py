@@ -3,11 +3,14 @@ import os
 from pathlib import Path
 import json
 
+from ffmpeg import commands
+from utils import helper
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = '0.0.0.0'
 server_port = 9001
 
-dpath = 'temp'
+dpath = 'server_temp'
 if not os.path.exists(dpath):
     os.makedirs(dpath)
 
@@ -22,10 +25,7 @@ while True:
         print('connection from', client_address)
 
         #Recieve the header
-        header = connection.recv(8)
-        json_size = int.from_bytes(header[0:2], byteorder='big')
-        media_type_size = int.from_bytes(header[2:3], byteorder='big')
-        payload_size = int.from_bytes(header[3:], byteorder='big')
+        json_size, media_type_size, payload_size = helper.receive_header(connection)
         stream_rate = 1024
 
         if payload_size > 4 * 1024 * 1024 * 1024:  # 4TB in bytes
@@ -35,15 +35,20 @@ while True:
         print('Received header from client. Byte lengths: Json length {}, Media type size {}, Data size {}'.format(json_size, media_type_size, payload_size))
 
         # Recieve the payload
-        body = b''
-        while payload_size > 0:
-            body += connection.recv(stream_rate if payload_size > stream_rate else payload_size)
-            payload_size -= stream_rate
-        with open(os.path.join(dpath,'OUTPUT_FILE'), 'wb+') as f:
-            f.write(body)
-        print('File saved')
+        file_name = os.path.join(dpath, 'input.mp4')
+        helper.receive_data(connection, payload_size, file_name)
 
-        
+        # Run the ffmpeg command
+        commands.ffmpeg_run(file_name, os.path.join(dpath, 'output.mp4'))
+
+        #return the output file
+        filepath = os.path.join(dpath,'output.mp4')
+        file_size = helper.get_filesize(filepath)
+        if file_size > pow(2, 32):
+            raise Exception('File size exceeds 4TB limit')
+        helper.send_header(connection, filepath, file_size)
+        helper.send_data(connection, filepath)
+
 
     except Exception as e:
         print('Error: ' +  str(e))
