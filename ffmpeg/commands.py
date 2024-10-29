@@ -32,7 +32,12 @@ def ffmpeg_run(input_file_path, output_file_path):
                      ' 2. 4:3\n'
                      ' 3. 1:1\n')
         ratio = ratio_hash[ratio_choice]
-        subprocess.run(f"ffmpeg -i {input_file_path} -vf scale={ratio} {output_file_path}".split())
+        width, height = map(int, ratio.split(':'))
+        subprocess.run([
+            "ffmpeg", "-i", input_file_path, 
+            "-vf", f"scale=w={width}:h={height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2", 
+            output_file_path
+        ])
     elif command == '3':
         resolution_choice = input('Choice the desired ratio: \
                     1. 1920 : 1080 \
