@@ -14,6 +14,17 @@ This project demonstrates a client-server model for video and audio processing. 
 - **FFmpeg Integration**:
   - Handles various media processing tasks such as compression, resizing, format conversion, and more.
 
+# Commands
+
+| Command | Description                                       | Example JSON                                |
+|---------|---------------------------------------------------|--------------------------------------------|
+| 1       | Compress video with adjustable quality (crf).     | `{"command": 1, "crf": 23}`                |
+| 2       | Resize video to a specific aspect ratio.          | `{"command": 2, "ratio_choice": "1"}`      |
+| 3       | Change video resolution to a predefined standard. | `{"command": 3, "resolution_choice": "2"}` |
+| 4       | Extract audio from video and save as MP3.         | `{"command": 4}`                           |
+| 5       | Convert video to GIF format.                      | `{"command": 5}`                           |
+| 6      
+
 ## File Overview
 
 ### `server.py`
